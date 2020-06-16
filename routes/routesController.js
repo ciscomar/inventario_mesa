@@ -110,6 +110,7 @@ controller.mesa_captura_POST = (req, res) => {
                         funcion.ubicacion((err, result7) => {
                             funcion.TalonesEntregados((err, talones) => {
 
+
                                 res.render('mesa_captura.ejs', {
                                     gafete: gafete,
                                     materiales: result,
@@ -118,7 +119,8 @@ controller.mesa_captura_POST = (req, res) => {
                                     maxmin: result5,
                                     misTickets: result6,
                                     ubicacion: result7,
-                                    talones
+                                    talones,
+
                                 })
                             })
                         })
@@ -139,8 +141,10 @@ controller.guardar_captura_POST = (req, res) => {
     ubicacion = req.body.ubicacion
     idTalon = req.body.idTalon
 
-    funcion.InsertCaptura(ticket, material, cantidad, ubicacion, gafete, (err, result3) => {
-        funcion.IncrementCaptura(idTalon, (err, resu) => {
+
+
+    funcion.InsertCaptura(ticket, idTalon, material, cantidad, ubicacion, gafete, (err, result3) => {
+        //funcion.IncrementCaptura(idTalon, (err, resu) => {
             funcion.material((err, materiales) => {
                 funcionE.empleadosNombre(gafete, (err, nombre) => {
                     funcion.ticketsCapturados((err, tickets) => {
@@ -168,7 +172,7 @@ controller.guardar_captura_POST = (req, res) => {
                 })
             })
         })
-    })
+    //})
 }
 
 controller.delete_ticket_POST = (req, res) => {
@@ -238,6 +242,30 @@ controller.ubicacion_POST = (req, res) => {
         })
     })
 }
+
+
+controller.consulta_mesa_GET = (req, res) => {
+
+    let arreglo = []
+
+    funcion.MaxTickets((err, maxmin) => {
+        arreglo.push(maxmin)
+        funcion.ticketsCapturados((err, tickets) => {
+            arreglo.push(tickets)
+            funcion.TalonesEntregados((err, talones) => {
+                arreglo.push(talones)
+                funcion.CapturadosPorTalon((err, capturadosPorTalon) => {
+                    arreglo.push(capturadosPorTalon)
+
+                    res.send(arreglo)
+                })
+            })
+        })
+    })
+
+
+}
+
 
 controller.ubicacion_rack_POST = (req, res) => {
     ubicacion = req.params.id
@@ -337,7 +365,7 @@ controller.conteo_guardar_POST = (req, res) => {
     gafete2 = captura_grupo.split("-", 1)
     estado_auditoria = 0
     serialesObsoletos = req.body.serialesObsoletos
-    errores="false"
+    errores = "false"
 
 
 
@@ -348,24 +376,24 @@ controller.conteo_guardar_POST = (req, res) => {
         let serialesArray = seriales.split(',');
         for (let i = 0; i < serialesArray.length; i++) {
 
-            
+
 
             funcion.InsertCapturaSerial(captura_grupo, serialesArray[i], ubicacion, gafete2[0], (err, result) => {
                 if (err != null) {
                     errores = "true"
-                
+
                 }
 
             })
 
         }
-    } else if(seriales !="") {
+    } else if (seriales != "") {
 
         funcion.InsertCapturaSerial(captura_grupo, seriales, ubicacion, gafete2[0], (err, result) => {
             if (err != null) {
                 errores = "true"
-               
-                
+
+
             }
         })
 
@@ -376,28 +404,28 @@ controller.conteo_guardar_POST = (req, res) => {
 
         let serialesObsoletosArray = serialesObsoletos.split(',');
         for (let i = 0; i < serialesObsoletosArray.length; i++) {
-          
-          
-            
-            RabbitPublisher.get_label(serialesObsoletosArray[i], (callback) => {})
-            
+
+
+
+            RabbitPublisher.get_label(serialesObsoletosArray[i], (callback) => { })
+
 
             funcion.InsertCapturaSerialObsoleto(captura_grupo, serialesObsoletosArray[i], ubicacion, gafete2[0], (err, result) => {
                 if (err != null) {
                     errores = "true"
-           
+
                 }
 
             })
 
         }
-    } else if(serialesObsoletos !="") {
-        RabbitPublisher.get_label(serialesObsoletos, (callback) => {})
-        funcion.InsertCapturaSerialObsoleto(captura_grupo, serialesObsoletos,  ubicacion, gafete2[0], (err, result) => {
+    } else if (serialesObsoletos != "") {
+        RabbitPublisher.get_label(serialesObsoletos, (callback) => { })
+        funcion.InsertCapturaSerialObsoleto(captura_grupo, serialesObsoletos, ubicacion, gafete2[0], (err, result) => {
             if (err != null) {
                 errores = "true"
-               
-                
+
+
             }
         })
 
@@ -412,21 +440,21 @@ controller.conteo_guardar_POST = (req, res) => {
 
     setTimeout(function () {
 
-    if (serialesObsoletos == "") {
-        return res.redirect('/login_conteo/ubicacion');
-    } else {
-       
-        res.render('conteo_obsoleto.ejs', {
+        if (serialesObsoletos == "") {
+            return res.redirect('/login_conteo/ubicacion');
+        } else {
 
-            gafete,
-            nombreContador,
-            ubicacion,
-            id_ubicacion,
-            serialesObsoletos,
-            captura_grupo,
-            errores
-        });
-    }
+            res.render('conteo_obsoleto.ejs', {
+
+                gafete,
+                nombreContador,
+                ubicacion,
+                id_ubicacion,
+                serialesObsoletos,
+                captura_grupo,
+                errores
+            });
+        }
     }, delay);
 
 }
@@ -435,7 +463,7 @@ controller.conteo_guardar_POST = (req, res) => {
 
 controller.conteoObsoleto_guardar_POST = (req, res) => {
 
-    
+
     seriales = req.body.inputSeriales
     partes = req.body.inputPartes
     cantidades = req.body.inputCantidades
@@ -443,7 +471,7 @@ controller.conteoObsoleto_guardar_POST = (req, res) => {
     ubicacion = req.body.ubicacion
     captura_grupo = req.body.captura_grupo
     errores = false
-    errorAnterior= req.body.error
+    errorAnterior = req.body.error
 
     gafete2 = captura_grupo.split("-", 1)
 
@@ -455,22 +483,22 @@ controller.conteoObsoleto_guardar_POST = (req, res) => {
         for (let i = 0; i < serialesArray.length; i++) {
 
             funcion.UpdateSerialObsoleto(serialesArray[i], partesArray[i], cantidadesArray[i], (err, result) => {
-         
-                if (err != null || result.affectedRows==0) {
+
+                if (err != null || result.affectedRows == 0) {
                     errores = true
                     res.redirect('/error');
-                    
-                  
+
+
                 }
 
 
             })
 
         }
-    } else if(seriales != "") {
+    } else if (seriales != "") {
 
         funcion.UpdateSerialObsoleto(seriales, partes, cantidades, (err, result) => {
-            if (err != null || result.affectedRows==0) {
+            if (err != null || result.affectedRows == 0) {
                 errores = true
                 res.redirect('/error');
             }
@@ -480,10 +508,10 @@ controller.conteoObsoleto_guardar_POST = (req, res) => {
 
     var delay = 500;
     setTimeout(function () {
-        if (errores == false && errorAnterior=="false") {
+        if (errores == false && errorAnterior == "false") {
             res.redirect('/login_conteo/ubicacion');
-        }else if(errorAnterior=="true" && errores==false){
-       
+        } else if (errorAnterior == "true" && errores == false) {
+
             res.redirect('/error');
         }
 
@@ -533,11 +561,11 @@ controller.guardar_cancelado_POST = (req, res) => {
 
     for (let i = ticketI; i <= ticketF; i++) {
 
-        funcion.InsertCaptura(i, "CANCELADO", 0, "N/A", gafete, (err, result3) => {
+        funcion.InsertCaptura(i, idTalon, "CANCELADO", 0, "N/A", gafete, (err, result3) => {
             if (err) throw err;
-            funcion.IncrementCaptura(idTalon, (err, resul) => {
-                if (err) throw err;
-            });
+            // funcion.IncrementCaptura(idTalon, (err, resul) => {
+            //     if (err) throw err;
+            // });
         });
     }
 
@@ -588,16 +616,20 @@ controller.talones_POST = (req, res) => {
             funcionE.empleados((err, empleados) => {
                 if (err) throw err;
                 funcion.CountTalonesP((err, TalonesP) => {
-                    res.render('talones.ejs', {
-                        gafete,
-                        nombre,
-                        talones,
-                        empleados,
-                        TalonesP
+                    funcion.CapturadosPorTalon((err, capturadosPorTalon) => {
+                        
+                        res.render('talones.ejs', {
+                            gafete,
+                            nombre,
+                            talones,
+                            empleados,
+                            TalonesP,
+                            capturadosPorTalon
+                        });
                     });
                 });
             });
-        });
+        })
     });
 
 
@@ -651,18 +683,21 @@ controller.guardar_talon_POST = (req, res) => {
                 funcionE.empleados((err, empleados) => {
                     if (err) throw err;
                     funcion.CountTalonesP((err, TalonesP) => {
+                        funcion.CapturadosPorTalon((err, capturadosPorTalon) => {
                         res.render('talones.ejs', {
                             gafete,
                             nombre,
                             talones,
                             empleados,
-                            TalonesP
+                            TalonesP,
+                            capturadosPorTalon
                         });
                     });
                 });
             });
         });
     });
+});
 
 
 };
@@ -678,18 +713,21 @@ controller.delete_talon_POST = (req, res) => {
                 funcionE.empleados((err, empleados) => {
                     if (err) throw err;
                     funcion.CountTalonesP((err, TalonesP) => {
+                        funcion.CapturadosPorTalon((err, capturadosPorTalon) => {
                         res.render('talones.ejs', {
                             gafete,
                             nombre,
                             talones,
                             empleados,
-                            TalonesP
+                            TalonesP,
+                            capturadosPorTalon
                         });
                     });
                 });
             });
         });
     });
+});
 
 
 };
@@ -712,18 +750,21 @@ controller.status_talon_POST = (req, res) => {
                 funcionE.empleados((err, empleados) => {
                     if (err) throw err;
                     funcion.CountTalonesP((err, TalonesP) => {
+                        funcion.CapturadosPorTalon((err, capturadosPorTalon) => {
                         res.render('talones.ejs', {
                             gafete,
                             nombre,
                             talones,
                             empleados,
-                            TalonesP
+                            TalonesP,
+                            capturadosPorTalon
                         });
                     });
                 });
             });
         });
     });
+});
 
 
 };

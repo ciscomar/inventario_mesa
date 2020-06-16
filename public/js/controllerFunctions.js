@@ -84,10 +84,10 @@ funcion.SelectCurrentCapturas= (captura_grupo,callback)=>{
     })
 }
 
-funcion.InsertCaptura = (serial,material, cantidad, ubicacion, gafete,callback)=>{
+funcion.InsertCaptura = (serial,idtalon,material, cantidad, ubicacion, gafete,callback)=>{
     db.query(`
-    INSERT INTO captura (serial, material, cantidad, ubicacion, num_empleado, fecha)
-    VALUES ('${serial}' , '${material}' , ${cantidad}, '${ubicacion}' , ${gafete} ,NOW())`,
+    INSERT INTO captura (captura_grupo,serial, material, cantidad, ubicacion, num_empleado, fecha)
+    VALUES ('T-${idtalon}','${serial}' , '${material}' , ${cantidad}, '${ubicacion}' , ${gafete} ,NOW())`,
     function (err, result, fields) {
         if (err) {
             
@@ -182,7 +182,7 @@ funcion.UpdateSerialObsoleto = (serial, parte, cantidad,callback)=>{
 }
 
 funcion.ticketsCapturados= (callback)=>{
-    db.query(`SELECT serial FROM captura WHERE captura_grupo IS NULL`,function (err, result, fields) {
+    db.query(`SELECT serial FROM captura WHERE captura_grupo LIKE '%T-%'`,function (err, result, fields) {
         if (err) {
           
             callback(err, null);
@@ -195,7 +195,7 @@ funcion.ticketsCapturados= (callback)=>{
 }
 
 funcion.Select_SerialesCapturados= (callback)=>{
-    db.query(`SELECT serial FROM captura WHERE captura_grupo IS NOT NULL`,function (err, result, fields) {
+    db.query(`SELECT serial FROM captura WHERE captura_grupo NOT LIKE '%T-%'`,function (err, result, fields) {
         if (err) {
           
             callback(err, null);
@@ -208,7 +208,7 @@ funcion.Select_SerialesCapturados= (callback)=>{
 }
 
 funcion.Select_GruposCapturados= (callback)=>{
-    db.query(`SELECT captura_grupo FROM captura WHERE captura_grupo IS NOT NULL`,function (err, result, fields) {
+    db.query(`SELECT captura_grupo FROM captura WHERE captura_grupo NOT LIKE '%T-%'`,function (err, result, fields) {
         if (err) {
           
             callback(err, null);
@@ -586,7 +586,7 @@ funcion.DeleteUbicacion= (idTicket,callback)=>{
 }
 
 funcion.CountTicketsCapturados= (callback)=>{
-    db.query(`SELECT COUNT (serial) AS TCapturados FROM captura WHERE captura_grupo IS NULL`, function (err, result, fields) {
+    db.query(`SELECT COUNT (serial) AS TCapturados FROM captura WHERE captura_grupo LIKE '%T-%'`, function (err, result, fields) {
         if (err) {
           
             callback(err, null);
@@ -599,7 +599,7 @@ funcion.CountTicketsCapturados= (callback)=>{
 }
 
 funcion.CountSerialesCapturados= (callback)=>{
-    db.query(`SELECT COUNT (serial) AS SCapturados FROM captura WHERE (captura_grupo IS NOT NULL )
+    db.query(`SELECT COUNT (serial) AS SCapturados FROM captura WHERE (captura_grupo NOT LIKE '%T-%' )
     AND (material IS NOT NULL)`, function (err, result, fields) {
         if (err) {
           
@@ -771,6 +771,20 @@ funcion.SelectSerial_SinContar_Vulc = (linea,callback)=>{
 
 funcion.Update_Serial_Auditado_VULC = (emp_id,serial_auditado,callback)=>{
     db_b10.query(`UPDATE etiquetas_semi SET no_serie_auditado = ${emp_id} WHERE no_serie = ${serial_auditado}`, function (err, result, fields) {
+        if (err) {
+          
+            callback(err, null);
+
+        } else {
+
+            callback(null, result);
+        }
+    })
+}
+
+
+funcion.CapturadosPorTalon= (callback)=>{
+    db.query(`SELECT captura_grupo, COUNT (*) AS Total FROM captura WHERE captura_grupo LIKE '%T-%' GROUP BY captura_grupo`,function (err, result, fields) {
         if (err) {
           
             callback(err, null);

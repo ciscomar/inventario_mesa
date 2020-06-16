@@ -39,7 +39,7 @@
 
 
         </div>
-        <form action="/guardar_captura" method="POST" autocomplete="off" id="form">
+        <form action="/guardar_captura" method="POST" autocomplete="off" id="formguardar">
           <div class="row">
 
             <div class="col-lg-2">
@@ -279,14 +279,110 @@
 <% include ./static/footer.ejs%>
 
 <script>
-  var submitting = false;
-  $("#form").submit(function (event) {
-    if (submitting) {
-      event.preventDefault();
-      return;
-    }
-    submitting = true;
-  });
+
+  let ticketArreglo;
+  let maxminarreglo;
+  let talonesarreglo;
+  let capturadosPorTalon;
+
+  let submitting =false;
+
+    $('#formguardar').on('submit', function(e) {
+      e.preventDefault();
+       
+        if(submitting==false){
+        submitting =true;
+        
+        $.ajax({
+            url : $(this).attr('action') || window.location.pathname,
+            type: "POST",
+            data: $(this).serialize(),
+            success: function(html){
+
+              $("#classTable").dataTable().fnDestroy()
+
+              $("#classTable").find('tbody')
+             .append($('<tr>')
+            .append($(`<td class="text-center" width="5%">  <form method="POST"> <button name="equipoid" type="submit" formaction="/delete_ticket" class="btn btn-danger text-center" data-toggle="tooltip" data-placement="left" onclick="clicked(event)"><span class="icoWhite fas fa-trash-alt"></span></button> <input type="text" name="idTicket" value="${$('#ticket').val()}" hidden> <input type="text" name="idGafete" value="<%= gafete%>" hidden> </form>   </td>`)
+            )
+            .append($(`<td width="10%"">${$('#ticket').val()}</td>`))
+            .append($(`<td width="10%"">${$('#parte').val()}</td>`))
+            .append($(`<td width="10%"">${$('#cantidad').val()}</td>`))
+            .append($(`<td width="10%"">${$('#ubicacion').val()}</td>`))             
+            )
+
+            
+
+
+                  $('#ticket').val('')
+                  $('#idTalon').val('')
+                  $('#parte').val('')
+                  $('#cantidad').val('')
+                  $('#cantidad2').val('')
+                  $('#ubicacion').val('')
+                  $('#msgCapturaTalon').text('')
+                  $('#msgTicket').text('')
+                  $('#msgParte').text('')
+                  $('#msgCant').text('')
+                  $('#msgCant2').text('')
+                  $('#msgubicacion').text('')
+                  $('#unidad').text('.')
+                  $('#descripcion').text('.')
+                  $('#asignado').text('.')
+                  $('#telefono').text('.')
+
+                  document.getElementById("ticket").focus();
+                  $('#btnguardar').prop("disabled", true);
+
+
+                
+                $('#classTable').dataTable( {
+                "pageLength" : 10,
+                "ordering": true,
+                "bPaginate": true,
+                "bLengthChange": false,
+                "bFilter": true,
+                "bInfo": true,
+                "bAutoWidth": true,
+                responsive: true,
+                rowGroup: {
+                    dataSrc: 'group'
+                },
+                rowReorder: true,
+                select: true,
+                autoFill: true
+              } );
+
+
+                  
+                },
+            error: function (jXHR, textStatus, errorThrown) {
+                alert(errorThrown);
+            }
+        });
+
+        consultaAjax()
+        submitting =false;
+
+        }else{
+          return
+        }
+
+        
+    });
+
+
+
+
+  //comentado al implementar ajax
+  // var submitting = false;
+  // $("#form").submit(function (event) {
+  //   if (submitting) {
+  //     event.preventDefault();
+  //     return;
+  //   }
+  //   submitting = true;
+  // });
 
   function clicked(e) {
     if (!confirm('Seguro que deseas eliminar?')) e.preventDefault();
@@ -305,7 +401,45 @@
 
   });
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  consultaAjax()
+
+  function consultaAjax() {
+
+    let xhr = new XMLHttpRequest();
+
+    xhr.open('GET', `/consulta_mesa`, true);
+
+        
+    xhr.onload = function () {
+    if (this.status == 200) {
+    arreglo = JSON.parse(this.responseText)
+    
+    
+    maxminarreglo=arreglo[0]
+    ticketArreglo=arreglo[1]
+    talonesarreglo=arreglo[2]
+    capturadosPorTalon=arreglo[3]
+
+    console.log(capturadosPorTalon)
+
+    } else if (this.status = 404) {
+          // document.getElementById('text').innerHTML = 'Not Found';
+      }
+    }
+
+
+    xhr.onerror = function () {
+      console.log('Request Error...');
+    }
+
+    xhr.send();
+
+  }
+
+
   parte.addEventListener("keyup", function (e) {
+
 
     material = <%- JSON.stringify(materiales) %>;
 
@@ -421,34 +555,47 @@
 
   ticket.addEventListener("keyup", function (e) {
 
-    ticket = <%- JSON.stringify(tickets) %>;
-    maxmin = <%- JSON.stringify(maxmin) %>;
+    //ticket = <%- JSON.stringify(tickets) %>;
+    //maxmin = <%- JSON.stringify(maxmin) %>;
     var msg = document.getElementById("msgTicket");
     var id = parseInt($('#ticket').val());
-    minimo = parseInt(maxmin[0].minimo)
-    maximo = parseInt(maxmin[0].maximo)
-    talones = <%- JSON.stringify(talones) %>;
+    minimo = parseInt(maxminarreglo[0].minimo)
+    maximo = parseInt(maxminarreglo[0].maximo)
+    //talones = <%- JSON.stringify(talones) %>;
     var msgTalon = document.getElementById("msgCapturaTalon");
+  
 
 
     if (id >= minimo && id <= maximo) {
 
 
 
-      if (ticket.length == 0) {
+      if (ticketArreglo.length == 0) {
 
 
-        for (var y = 0; y < talones.length; y++) {
+        for (var y = 0; y < talonesarreglo.length; y++) {
 
-
-          if (id >= talones[y].ticket_inicial && id <= talones[y].ticket_final) {
-            $('#asignado').text(talones[y].nombre_empleado);
-            $('#telefono').text(talones[y].telefono);
-            $('#idTalon').val(talones[y].id);
+          nuevoTalon=true
+          if (id >= talonesarreglo[y].ticket_inicial && id <= talonesarreglo[y].ticket_final) {
+            $('#asignado').text(talonesarreglo[y].nombre_empleado);
+            $('#telefono').text(talonesarreglo[y].telefono);
+            $('#idTalon').val(talonesarreglo[y].id);
             msg.innerHTML = ' Correcto';
             msg.classList.add('text-success');
             msg.classList.remove('text-danger');
-            msgTalon.innerHTML = talones[y].capturados + 1 + " / " + talones[y].totales;
+            for (let z = 0; z < capturadosPorTalon.length; z++) {
+              if("T-"+talonesarreglo[y].id==capturadosPorTalon[z].captura_grupo){
+                msgTalon.innerHTML = capturadosPorTalon[z].Total +1+ " / " + talonesarreglo[y].totales;
+                nuevoTalon=false;
+                break
+              }
+              
+            }
+
+            if (nuevoTalon==true){
+              msgTalon.innerHTML = "1"+ " / " + talonesarreglo[y].totales;
+            }
+           
             break
           }
 
@@ -456,9 +603,9 @@
 
       }
 
-      for (var i = 0; i < ticket.length; i++) {
+      for (var i = 0; i < ticketArreglo.length; i++) {
 
-        if (id == ticket[i].serial) {
+        if (id == ticketArreglo[i].serial) {
 
           msg.innerHTML = ' Duplicado';
           msg.classList.remove('text-success');
@@ -472,13 +619,24 @@
         } else {
 
           foundTicket = false
-          for (var y = 0; y < talones.length; y++) {
+          nuevoTalon=true
+          for (var y = 0; y < talonesarreglo.length; y++) {
 
-            if (id >= talones[y].ticket_inicial && id <= talones[y].ticket_final) {
-              $('#asignado').text(talones[y].nombre_empleado);
-              $('#telefono').text(talones[y].telefono);
-              $('#idTalon').val(talones[y].id);
-              msgTalon.innerHTML = talones[y].capturados + 1 + " / " + talones[y].totales;
+            if (id >= talonesarreglo[y].ticket_inicial && id <= talonesarreglo[y].ticket_final) {
+              $('#asignado').text(talonesarreglo[y].nombre_empleado);
+              $('#telefono').text(talonesarreglo[y].telefono);
+              $('#idTalon').val(talonesarreglo[y].id);
+              for (let z = 0; z < capturadosPorTalon.length; z++) {
+              if("T-"+talonesarreglo[y].id==capturadosPorTalon[z].captura_grupo){
+                msgTalon.innerHTML = capturadosPorTalon[z].Total +1+ " / " + talonesarreglo[y].totales;
+                nuevoTalon=false;
+                break
+              }
+              
+            }
+            if (nuevoTalon==true){
+              msgTalon.innerHTML = "1"+ " / " + talonesarreglo[y].totales;
+            }
               foundTicket = true
               break
             }
@@ -673,19 +831,20 @@
     }
   });
 
-  $(document).on('keypress', 'input,select', function (e) {
-    if (e.which == 13) {
-      e.preventDefault();
-      // Get all focusable elements on the page
-      var $canfocus = $(':focusable');
-      var index = $canfocus.index(document.activeElement) + 1;
-      if (index >= $canfocus.length) index = 0;
-      $canfocus.eq(index).focus();
-    }
+  //comentado al implementar ajax
+  // $(document).on('keypress', 'input,select', function (e) {
+  //   if (e.which == 13) {
+  //     e.preventDefault();
+  //     // Get all focusable elements on the page
+  //     var $canfocus = $(':focusable');
+  //     var index = $canfocus.index(document.activeElement) + 1;
+  //     if (index >= $canfocus.length) index = 0;
+  //     $canfocus.eq(index).focus();
+  //   }
 
-    if (e.which == 13 && $("#btnguardar").is(":enabled")) {
-      this.form.submit();
-    }
-  });
+  //   if (e.which == 13 && $("#btnguardar").is(":enabled")) {
+  //     this.form.submit();
+  //   }
+  // });
 
 </script>

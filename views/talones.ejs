@@ -161,12 +161,37 @@
                 </form>
 
               </td>
-              <% if (talones[i].capturados != talones[i].totales){ %>
+              <%found=false%>
+               <% for(let z = 0;z < capturadosPorTalon.length;z++){ %>               
+                
+                  <% if ("T-"+talones[i].id == capturadosPorTalon[z].captura_grupo){ %>
 
-              <td width='5%'><%= talones[i].capturados%> / <%= talones[i].totales%></td>
-              <%  }else{ %>
-              <td width='5%'><span class="icoWhite fas fa-check"></span></td>
-              <%  } %>
+
+                     <% if (capturadosPorTalon[z].Total == talones[i].totales){ %>
+                      <td width='5%'><span class="icoWhite fas fa-check"></span>
+                        <%found= true; break;%>
+                  <%  }else{ %>
+
+                    <td width='5%'><%= capturadosPorTalon[z].Total%> / <%= talones[i].totales%></td>              
+                  <%found= true; break;%>
+                    <%  } %>
+
+
+                  <%  }else{ %>
+                    <%found=false%>             
+                  <%  } %>
+                <%  } %>
+
+                <% if (found==false){ %>
+                  <td width='5%'>0 / <%= talones[i].totales%></td>
+                  <%  } %>
+      
+     
+  
+                <!-- <td width='5%'>0 / <%= talones[i].totales%></td>
+                <td width='5%'><span class="icoWhite fas fa-check"></span></td> -->
+
+              
               <td width='5%'><%= talones[i].ticket_inicial%> - <%= talones[i].ticket_final%></td>
               <td width='10%'><%= talones[i].nombre_empleado%></td>
               <td width='10%'><%= talones[i].telefono%></td>
